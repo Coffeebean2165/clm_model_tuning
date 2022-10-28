@@ -8,6 +8,7 @@ Here is the full list of checkpoints on the hub that can be fine-tuned by this s
 https://huggingface.co/models?filter=text-generation
 """
 
+from cgi import test
 import logging
 import math
 import os
@@ -371,7 +372,12 @@ def main(cfg: DictConfig):
             starting_epoch = resume_step // len(train_dataloader)
             resume_step -= starting_epoch * len(train_dataloader)
 
+    test_counter = 0
+
+    # Training
+
     for epoch in range(starting_epoch, cfg.training.num_epochs):
+        test_counter += 1
         model.train()
         if cfg.tracking.enabled is True:
             total_loss = 0
@@ -433,17 +439,30 @@ def main(cfg: DictConfig):
                     f"epoch {epoch}: perplexity: {perplexity} train_loss: {train_loss} eval_loss: {eval_loss}"
                 )
 
+
+                print('')
+                print('')
+                print(test_counter)
+                print('')
+                print(test_counter % 500)
+                print('')
                 epoch_dir = f"epoch_{epoch}_most_recent"
                 if cfg.output_dir is not None:
                     output_dir = os.path.join(cfg.output_dir, epoch_dir)
                 unwrapped_model = accelerator.unwrap_model(model)
-                unwrapped_model.save_pretrained(
-                    output_dir,
-                    is_main_process=accelerator.is_main_process,
-                    save_function=accelerator.save,
-                )
-                if accelerator.is_main_process:
-                    tokenizer.save_pretrained(output_dir)
+                if test_counter % 500 == 0:
+                    print('hi)')
+                    print('hi)')
+
+                    unwrapped_model.save_pretrained(
+                        output_dir,
+                        is_main_process=accelerator.is_main_process,
+                        save_function=accelerator.save,
+                    )
+                    print('saved)')
+                    print('saved)')
+                    if accelerator.is_main_process:
+                        tokenizer.save_pretrained(output_dir)
 
         if cfg.tracking.enabled is True:
             accelerator.log(
